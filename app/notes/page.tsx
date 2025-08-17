@@ -1,43 +1,30 @@
-import { getNotes } from '@/lib/api';
-import NoteList from '@/components/NoteList/NoteList';
+import css from './NotesPage.module.css';
+import AppClient from './Notes.client';
+import {
+  QueryClient,
+  HydrationBoundary,
+  dehydrate,
+} from '@tanstack/react-query';
+import { fetchNotes } from '@/lib/api';
 
-const Notes = async () => {
-  const response = await getNotes();
-
-  return (
-    <section>
-      <h1>Notes List</h1>
-      {response?.notes?.length > 0 && <NoteList notes={response.notes} />}
-    </section>
-  );
+type Props = {
+  params: Promise<{ query: string; page: number }>;
 };
 
-export default Notes;
+export default async function App({ params }: Props) {
+  const queryClient = new QueryClient();
 
-// CLient conponent=>
-// 'use client';
+  const { query, page } = await params;
 
-// import { useState } from 'react';
-// import NoteList from '@/components/NoteList/NoteList';
-// import { getNotes, Note } from '@/lib/api';
-
-// const Notes = () => {
-//   const [notes, setNotes] = useState<Note[]>([]);
-
-//   const handleClick = async () => {
-//     const response = await getNotes();
-//     if (response?.notes) {
-//       setNotes(response.notes);
-//     }
-//   };
-
-//   return (
-//     <section>
-//       <h1>Notes List</h1>
-//       <button onClick={handleClick}>Get my notes</button>
-//       {notes.length > 0 && <NoteList notes={notes} />}
-//     </section>
-//   );
-// };
-
-// export default Notes;
+  queryClient.prefetchQuery({
+    queryKey: ['notes', query, page],
+    queryFn: () => fetchNotes(query, page),
+  });
+  return (
+    <div className={css.app}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <AppClient />
+      </HydrationBoundary>
+    </div>
+  );
+}
