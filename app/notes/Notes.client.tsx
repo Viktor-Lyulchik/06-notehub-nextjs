@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useDebouncedCallback } from 'use-debounce';
 import toast, { Toaster } from 'react-hot-toast';
-import { fetchNotes } from '@/lib/api';
+import { fetchNotes, NotesHttpResponse } from '@/lib/api';
 
 import css from './NotesPage.module.css';
 
@@ -16,7 +16,11 @@ import Modal from '@/components/Modal/Modal';
 import NoteForm from '@/components/NoteForm/NoteForm';
 import SearchBox from '@/components/SearchBox/SearchBox';
 
-export default function AppClient() {
+interface AppClientProps {
+  initialData: NotesHttpResponse;
+}
+
+export default function AppClient({ initialData }: AppClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [query, setQuery] = useState('');
@@ -35,10 +39,11 @@ export default function AppClient() {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const { data, isLoading, isError, isSuccess } = useQuery({
+  const { data, isLoading, isError, isSuccess } = useQuery<NotesHttpResponse>({
     queryKey: ['notes', debouncedQuery, currentPage],
     queryFn: () => fetchNotes(debouncedQuery, currentPage),
     placeholderData: keepPreviousData,
+    initialData,
   });
 
   const totalPages = data?.totalPages ?? 0;
